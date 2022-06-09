@@ -1,8 +1,9 @@
-import { Router } from 'express'
-import { userController } from '../controller'
+const Router = require("express")
+const router = new Router()
+const userController = require("./controller")
 
-export const userRouter = new Router()
+router.post('/register', userController.registerUser)
+router.post('/auth', userController.authUser)
+router.put('/restore-password', userController.restorePassword)
 
-userRouter.post('/register', userController.registerUser)
-userRouter.post('/auth', userController.authUser)
-userRouter.put('/restore-password', userController.restorePassword)
+module.exports = router
