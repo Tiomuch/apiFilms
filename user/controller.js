@@ -1,5 +1,6 @@
 const db = require("../db")
 const bcrypt = require('bcrypt')
+const jwt = require("jsonwebtoken")
 require('dotenv').config()
 
 class UserController {
@@ -9,7 +10,7 @@ class UserController {
         const user = await db.query("SELECT * from users where name = $1", [name])
         if(!!user?.rows[0]) {
             res.status(400).json({
-                message: 'Name already used'
+                message: 'Name already in use'
             })
             return
         }
@@ -17,11 +18,22 @@ class UserController {
         const salt = bcrypt.genSaltSync(10)
         const hashedPassword = bcrypt.hashSync(password, salt)
 
-        const newSecretNumber = process.env.SECRET_NUMBER * secret_number - process.env.SECRET_NUMBER * process.env.SECRET_NUMBER
+        const newSecretNumber = process.env.SECRET_NUMBER * +secret_number - process.env.SECRET_NUMBER * process.env.SECRET_NUMBER
 
-        const newPerson = await db.query("INSERT INTO users (name, password, secret_number) values ($1, $2, $3) returning *", [name, hashedPassword, newSecretNumber])
-        res.status(200).json(newPerson.rows[0])
-        // TODO отдать токен
+        const newPerson = await db.query("INSERT INTO users (name, password, secret_number) values ($1, $2, $3) returning *", [name, hashedPassword, +newSecretNumber])
+        const newUser = newPerson.rows[0]
+
+        const token = jwt.sign(
+            { id: newUser.id, name },
+            process.env.TOKEN_KEY,
+            {
+                expiresIn: "1h",
+            }
+        )
+
+        newUser.token = token
+
+        res.status(200).json(newUser)
     }
     async restorePassword(req, res) {
         const {name, password, secret_number} = req.body
@@ -65,8 +77,19 @@ class UserController {
             return
         }
 
-        res.status(200).json(user.rows[0])
-        // TODO отдать токен
+        const newUser = user.rows[0]
+
+        const token = jwt.sign(
+            { id: newUser.id, name },
+            process.env.TOKEN_KEY,
+            {
+                expiresIn: "1h",
+            }
+        )
+
+        newUser.token = token
+
+        res.status(200).json(newUser)
     }
 }
 

@@ -2,7 +2,6 @@ const db = require("../db")
 
 class FilmsController {
     async createFilm(req, res) {
-        // TODO Проверять токен
         const {title, description, image} = req.body
 
         const film = await db.query("SELECT * from films where title = $1", [title])
@@ -17,22 +16,17 @@ class FilmsController {
         res.status(200).json(newFilm.rows[0])
     }
     async getFilms(req, res) {
-        // TODO Проверять токен
-        const {page, limit} = req.query
+        const {page = 1, limit = 10} = req.query
 
-        if (!page || !limit) {
-            res.status(400).json({
-                message: 'Page or limit is undefined'
-            })
-            return
-        }
+        const skip = +limit * (+page - 1);
 
-        // TODO доделать
+        const films = await db.query("SELECT * from films limit $1 offset $2", [limit, skip])
 
-        res.status(200).json("ok")
+        const total = await db.query("SELECT COUNT(*) from films")
+
+        res.status(200).json({data: films.rows, total: +total.rows[0].count})
     }
     async updateFilm(req, res) {
-        // TODO Проверять токен
         const {title, description, image} = req.body
         const id = req.params.id
 
@@ -48,7 +42,6 @@ class FilmsController {
         res.status(200).json(newFilm?.rows[0])
     }
     async deleteFilm(req, res) {
-        // TODO Проверять токен
         const id = req.params.id
 
         const film = await db.query("SELECT * from films where id = $1", [id])
