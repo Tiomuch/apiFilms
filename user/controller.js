@@ -31,9 +31,7 @@ class UserController {
             }
         )
 
-        newUser.token = token
-
-        res.status(200).json(newUser)
+        res.status(200).json({data: newUser, token})
     }
     async restorePassword(req, res) {
         const {name, password, secret_number} = req.body
@@ -58,6 +56,21 @@ class UserController {
         res.status(200).json({
             message: 'Password changed successfully'
         })
+    }
+    async getUser(req, res) {
+        const token = req.headers["authorization"]
+
+        const user = jwt.decode(token?.split(' ')[1])
+
+        const dbUser = await db.query("SELECT * from users where name = $1", [user.name])
+        if(!dbUser?.rows[0]) {
+            res.status(400).json({
+                message: 'User is not exist'
+            })
+            return
+        }
+
+        res.status(200).json(dbUser?.rows[0])
     }
     async authUser(req, res) {
         const {name, password} = req.body
@@ -87,9 +100,7 @@ class UserController {
             }
         )
 
-        newUser.token = token
-
-        res.status(200).json(newUser)
+        res.status(200).json({data: newUser, token})
     }
 }
 
