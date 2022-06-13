@@ -26,6 +26,20 @@ class FilmsController {
 
         res.status(200).json({data: films.rows, total: +total.rows[0].count})
     }
+    async getFilmById(req, res) {
+        const id = req.params.id
+
+        const film = await db.query("SELECT * from films WHERE id = $1", [id])
+
+        if(!film?.rows[0]) {
+            res.status(400).json({
+                message: 'Film is not exist'
+            })
+            return
+        }
+
+        res.status(200).json(film?.rows[0])
+    }
     async updateFilm(req, res) {
         const {title, description, image} = req.body
         const id = req.params.id

@@ -52,7 +52,10 @@ class UserController {
             return
         }
 
-        const newUser = await db.query("UPDATE users set password = $1 where name = $2 returning *", [password, name])
+        const salt = bcrypt.genSaltSync(10)
+        const hashedPassword = bcrypt.hashSync(password, salt)
+
+        const newUser = await db.query("UPDATE users set password = $1 where name = $2 returning *", [hashedPassword, name])
         res.status(200).json({
             message: 'Password changed successfully'
         })
